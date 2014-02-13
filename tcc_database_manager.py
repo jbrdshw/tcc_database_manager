@@ -3,7 +3,7 @@
 
 ################################################################################
 ##                                                                            ##
-## tcc_database.py                                                            ##
+## tcc_database_manager.py                                                    ##
 ##                                                                            ##
 ## This script takes in a service name and a bundle ID and adds an entry to   ##
 ## the appropriate TCC.db file to allow access for that item.  This is to be  ##
