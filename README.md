@@ -22,12 +22,49 @@ Short of the help option to provide usage information, the script requires two a
 1. The service name, e.g. "kTCCServiceAddressBook" (for Contacts)
 2. The bundle ID of the application, e.g. "com.apple.Finder" (for Finder)
 
+Note: See "Finding Bundle IDs" below for information on finding the bundle ID of the application.
+
 If any additional arguments are passed to the script, it disregards them entirely.
 
 **Examples**
 
 * `$ /path/to/tcc_database.py kTCCServiceAddressBook com.apple.Finder`
 * `$ sudo /path/to/tcc_database.py kTCCServiceAccessibility my.needy.Application`
+
+**Finding Bundle IDs**
+
+As bundle IDs are the method Apple uses to manage its TCC databases, it's important to know how to find them for any application.  In general, they can be found in the application's `Info.plist` file.  If your application is located at `/Applications/MyAwesomeApp.app`, then the plist file will most likely be located at `/Applications/MyAwesomeApp.app/Contents/Info.plist`.  In particular, you'll need to search for the string corresponding to the key `CFBundleIdentifier`.
+
+Brett Terpstra [detailed a shell script to help with this](http://brettterpstra.com/2012/07/31/overthinking-it-fast-bundle-id-retrieval-for-mac-apps/), which I will reproduce here for your convenience.  As bash is my primary shell, I put this into the end of my `~/.bash_profile` so I can call it easily at any time.
+
+```bash
+# Allows for searching of Bundle IDs by application name
+# Written by Brett Terpstra
+bid() {
+	local shortname location
+
+	# combine all args as regex
+	# (and remove ".app" from the end if it exists due to autocomplete)
+	shortname=$(echo "${@%%.app}"|sed 's/ /.*/g')
+	# if the file is a full match in apps folder, roll with it
+	if [ -d "/Applications/$shortname.app" ]; then
+		location="/Applications/$shortname.app"
+	else # otherwise, start searching
+		location=$(mdfind -onlyin /Applications -onlyin ~/Applications -onlyin /Developer/Applications 'kMDItemKind==Application'|awk -F '/' -v re="$shortname" 'tolower($NF) ~ re {print $0}'|head -n1)
+	fi
+	# No results? Die.
+	[[ -z $location || $location = "" ]] && echo "$1 not found, I quit" && return
+	# Otherwise, find the bundleid using spotlight metadata
+	bundleid=$(mdls -name kMDItemCFBundleIdentifier -r "$location")
+	# return the result or an error message
+	[[ -z $bundleid || $bundleid = "" ]] && echo "Error getting bundle ID for \"$@\"" || echo "$location: $bundleid"
+}
+```
+Once this is in your source file, you can simply call it as a command and it will search for your application and return both the app's location and its bundle ID:
+```
+$ bid safari
+/Applications/safari.app: com.apple.Safari
+```
 
 Caveats
 -------
@@ -41,6 +78,26 @@ The script only recognizes three service names:
 As far as I am aware, these are the only service names that show up in TCC.db.  I made the script exclusive of other options to ensure no mistaken entries are created.
 
 Additionally, this script assumes that the user wants to grant permission to the specified application.  In a desire to simplify execution of the script, I chose to remove the ability to deny access.  Adding such an option should not be too difficult, though.
+
+Annoyances
+----------
+
+Disappointingly, there does not seem to be an easy way to simply find out whether an application will request access to one of these services without opening the application and navigating it to a point where it asks for permission.  We have been investigating methods of programmatically discerning which of our applications will prompt the user to access different services, but have thus far been unsuccessful.  If you happen to know anything about this, we'd greatly appreciate any ideas.
+
+It is worth noting that Apple has a method of automatically allowing certain applications access to services.  For example, in OS X 10.9 "Mavericks", TextEdit will automatically gain access to the `kTCCServiceUbiquity` service during its first launch, without any sort of prompt to the user.  We contacted Apple about utilizing this apparent backdoor for our machines so that we could just allow all requests to Contacts access (which would not pose an issue in our environment, I promise), but they informed us that this ability is hardcoded into the OS and we cannot access it.
+
+There is also the mysterious `tccutil` command.  Its man page states:
+```
+DESCRIPTION
+     The tccutil command manages the privacy database, which stores decisions the user has made about whether apps may
+     access personal data.
+
+     One command is current supported:
+
+     reset    Reset all decisions for the specified service, causing apps to prompt again the next time they access the ser-
+              vice.
+```
+I wish that this utility could be used to add access to a particular service for a specified application, or to completely open a service up and automatically accept all requests to it, or to turn off the service entirely so requests don't even exist... but none of this is possible.  The command only resets all access requests to a given service.
 
 Technical
 ---------
