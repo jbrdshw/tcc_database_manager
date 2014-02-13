@@ -3,6 +3,17 @@ tcc_database_manager
 
 This Python script helps to add items to the TCC.db sqlite database, which is useful in a distributed environment where a blanket TCC file would not work properly.
 
+Contents
+--------
+* [Background](#background) - what this script addresses
+* [Usage](#usage) - how to use this script on the command line
+  * [Examples](#examples) - usage examples
+  * [Finding Bundle IDs](#finding-bundle-ids) - how to supply the necessary bundle ID
+* [Caveats](#caveats) - this script isn't perfect...
+* [Annoyances](#annoyances) - difficulties with the TCC system as a whole
+* [Technical](#technical) - workarounds for per-environment specifications
+* [Attribution](#attribution) - thanks!
+
 Background
 ----------
 
@@ -21,17 +32,16 @@ Short of the help option to provide usage information, the script requires two a
 
 1. The service name, e.g. "kTCCServiceAddressBook" (for Contacts)
 2. The bundle ID of the application, e.g. "com.apple.Finder" (for Finder)
-
-Note: See "Finding Bundle IDs" below for information on finding the bundle ID of the application.
+  * Note: See [Finding Bundle IDs](#finding-bundle-ids) below for information on finding the bundle ID of the application.
 
 If any additional arguments are passed to the script, it disregards them entirely.
 
-**Examples**
+#### Examples
 
 * `$ /path/to/tcc_database.py kTCCServiceAddressBook com.apple.Finder`
 * `$ sudo /path/to/tcc_database.py kTCCServiceAccessibility my.needy.Application`
 
-**Finding Bundle IDs**
+#### Finding Bundle IDs
 
 As bundle IDs are the method Apple uses to manage its TCC databases, it's important to know how to find them for any application.  In general, they can be found in the application's `Info.plist` file.  If your application is located at `/Applications/MyAwesomeApp.app`, then the plist file will most likely be located at `/Applications/MyAwesomeApp.app/Contents/Info.plist`.  In particular, you'll need to search for the string corresponding to the key `CFBundleIdentifier`.
 
@@ -117,5 +127,8 @@ to
 Python will automatically expand the path appropriately with the tilde.
 
 Attribution
-===========
-Much of the code used in this script was copy/pasted and then adapted from the `tccmanager.py` script written by Tim Sutton and published to his GitHub repository at https://github.com/timsutton/scripts/tree/master/tccmanager.  We're very grateful to Tim for posting his code online freely; it has been very helpful to us.
+-----------
+
+Much of the code used in this script was copy/pasted and then adapted from the `tccmanager.py` script written by Tim Sutton and published to his [GitHub repository](http://github.com/timsutton/scripts/tree/master/tccmanager).  We're very grateful to Tim for posting his code online freely; it has been very helpful to us.
+
+Also, as mentioned above, thanks to Brett Terpstra for publishing his function to find bundle IDs online [at his website](http://brettterpstra.com/2012/07/31/overthinking-it-fast-bundle-id-retrieval-for-mac-apps/).
