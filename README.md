@@ -1,4 +1,4 @@
-tcc_database_manager
+TCC Database Manager
 ====================
 
 This Python script helps to add items to OS X's TCC.db sqlite database, which is useful in a distributed Apple-centric environment where a blanket TCC file would not work properly.
