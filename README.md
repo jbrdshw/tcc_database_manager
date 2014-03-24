@@ -1,7 +1,7 @@
 tcc_database_manager
 ====================
 
-This Python script helps to add items to the TCC.db sqlite database, which is useful in a distributed environment where a blanket TCC file would not work properly.
+This Python script helps to add items to OS X's TCC.db sqlite database, which is useful in a distributed Apple-centric environment where a blanket TCC file would not work properly.
 
 Contents
 --------
@@ -17,9 +17,11 @@ Contents
 Background
 ----------
 
-Many applications request permission to access any of a number of services, such as Contacts, Accessibility, and iCloud.  Apple stores your answer to these requests in a sqlite3 database, named TCC.db.
+Apple's OS X 10.8 "Mountain Lion" introduced a feature which notifies users whenever an application attempts to gain access to their contacts (address book) or their computer's "Accessibility" options (such as screen overlays).  Whenever a user responds to one of these prompts, the computer stores the answer in an sqlite3 databased called "TCC.db".  In a single-user environment, this is usually a perfectly suitable solution without problems.
 
-This poses a problem in a distributed environment, though.  We constantly add new applications to our systems, and having to recreate the TCC file for our template user every time would be tedious and potentially prone to error (what if you forgot one of the other applications?).  This script allows us to programmatically add new applications to the database during our post-maintenance cycle.  In our environment it's integrated in such a way that adding an entry to the TCC.db database is no more difficult than adding a single line of text to our command files.
+However, this system causes issues in distributed environments where applications may be added or removed at any time and the database file would need to be updated.  Constantly having to update this file for the template user would be tedious and could cause errors (what if you forgot to add one of the other applications?).
+
+This script allows for applications to programmatically be added to the TCC database during our regular maintenance cycle.  In our environment, it's integrated in such a way that adding an entry to the TCC.db database is no more difficult than adding a single line of text to our files, which is significantly simpler than rebuilding the entire database file and uploading it to our main image server.
 
 Usage
 -----
@@ -28,7 +30,7 @@ Usage
 
 Of course, help text is available.  Simply call the script with any of `h`, `-h`, `help`, `--help` to access it.
 
-Short of the help option to provide usage information, the script requires two arguments to be passed to it:
+Aside from the help option to provide usage information, the script requires two arguments to be passed to it:
 
 1. The service name, e.g. "kTCCServiceAddressBook" (for Contacts)
 2. The bundle ID of the application, e.g. "com.apple.Finder" (for Finder)
@@ -40,6 +42,8 @@ If any additional arguments are passed to the script, it disregards them entirel
 
 * `$ /path/to/tcc_database.py kTCCServiceAddressBook com.apple.Finder`
 * `$ sudo /path/to/tcc_database.py kTCCServiceAccessibility my.needy.Application`
+
+Note that adding an application to the Accessibility keychain requires root access.  This is because all Accessibility settings are saved into `/Library/Application Support/com.apple.TCC/TCC.db` - saving these settings into a user's local TCC.db file will *not* work!
 
 #### Finding Bundle IDs
 
@@ -112,7 +116,7 @@ I wish that this utility could be used to add access to a particular service for
 Technical
 ---------
 
-Apple in fact has multiple TCC.db database files in any given installation (though none of them exist until the appropriate service is requested access to).  There is one for each user, in their `~/Library/Application Support/com.apple.TCC` folder, and there is one root database, located in `/Library/Application Support/com.apple.TCC`.  The local databases (those in each user's directory) are responsible for Contacts access and iCloud access.  The settings for these applications are granted on a per-user basis this way.  However, Accessibility permissions are stored (and must be stored) in the `/Library/...` database.  I assume this is due to the nature of those types of applications that request Accessibility access (they are granted some freedoms to the machine that could potentially be undesirable, so administrative access is required to add them).
+Apple in fact has multiple TCC.db database files in any given installation of OS X 10.8 or newer (though none of them exist until the appropriate service is requested access to).  There is one for each user, in their `~/Library/Application Support/com.apple.TCC` folder, and there is one root database, located in `/Library/Application Support/com.apple.TCC`.  The local databases (those in each user's directory) are responsible for Contacts access and iCloud access.  The settings for these applications are granted on a per-user, per-application basis this way.  However, Accessibility permissions are stored (and must be stored) in the `/Library/...` database.  I assume this is due to the nature of those types of applications that request Accessibility access (they are granted some freedoms to the machine that could potentially be undesirable, so administrative access is required to add them).
 
 This script will add Accessibility requests to the `/Library/...` database (assuming it is run with root permissions).  The other requests will be added to the TCC database file located at `/System/Library/User Template/English.lproj/Library/Application Support/com.apple.TCC/TCC.db`.  This is Apple's default template directory, from which all other user directories are created.
 
